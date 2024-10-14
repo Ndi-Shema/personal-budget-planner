@@ -1,13 +1,13 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import { v4 as uuidv4 } from 'uuid';
 
 const AddExpenseForm = () => {
-  const { dispatch } = useContext(AppContext);
+  const { dispatch, categories } = useContext(AppContext); // Get categories from context
 
   const [name, setName] = useState('');
   const [cost, setCost] = useState('');
-  const [category, setCategory] = useState('Shopping'); // Default category
+  const [category, setCategory] = useState('');
 
   const onSubmit = (event) => {
     event.preventDefault();
@@ -16,7 +16,7 @@ const AddExpenseForm = () => {
       id: uuidv4(),
       name,
       cost: parseFloat(cost),
-      category, // Include category
+      category,
     };
 
     dispatch({
@@ -26,7 +26,7 @@ const AddExpenseForm = () => {
 
     setName('');
     setCost('');
-    setCategory('Shopping');
+    setCategory('');
   };
 
   return (
@@ -34,7 +34,7 @@ const AddExpenseForm = () => {
       <div className='row'>
         <div className='col-sm'>
           <div className='form-group'>
-            <label for='name'>Name</label>
+            <label htmlFor='name'>Name</label>
             <input
               required='required'
               type='text'
@@ -47,7 +47,7 @@ const AddExpenseForm = () => {
         </div>
         <div className='col-sm'>
           <div className='form-group'>
-            <label for='cost'>Cost</label>
+            <label htmlFor='cost'>Cost</label>
             <input
               required='required'
               type='number'
@@ -60,29 +60,26 @@ const AddExpenseForm = () => {
         </div>
         <div className='col-sm'>
           <div className='form-group'>
-            <label for='category'>Category</label>
+            <label htmlFor='category'>Category</label>
             <select
               className='form-control'
               id='category'
               value={category}
               onChange={(event) => setCategory(event.target.value)}
             >
-              <option value='Shopping'>Shopping</option>
-              <option value='Entertainment'>Entertainment</option>
-              <option value='Transport'>Transport</option>
-              <option value='Child Care'>Child Care</option>
-              {/* Add more categories as needed */}
+              <option value=''>Select category</option>
+              {categories.map((cat) => (
+                <option key={cat.name} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
       </div>
-      <div className='row'>
-        <div className='col-sm'>
-          <button type='submit' className='btn btn-primary'>
-            Save
-          </button>
-        </div>
-      </div>
+      <button type='submit' className='btn btn-primary'>
+        Save
+      </button>
     </form>
   );
 };

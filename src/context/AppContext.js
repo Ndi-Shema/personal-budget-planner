@@ -1,69 +1,70 @@
-import React, { createContext, useReducer, useEffect } from 'react';
+import React, { createContext, useReducer } from 'react';
 
 const initialState = {
-    budget: 0,
-    expenses: [],
+    expenses: JSON.parse(localStorage.getItem('expenses')) || [],
+    budget: parseFloat(localStorage.getItem('budget')) || 2000,
+    categories: JSON.parse(localStorage.getItem('categories')) || [
+        { name: 'Shopping', limit: 500 },
+        { name: 'Entertainment', limit: 300 },
+    ],
 };
 
-const AppReducer = (state, action) => {
+// Reducer function to manage actions
+const appReducer = (state, action) => {
     switch (action.type) {
-        case 'SET_BUDGET':
-            return {
-                ...state,
-                budget: action.payload,
-            };
         case 'ADD_EXPENSE':
+            const updatedExpenses = [...state.expenses, action.payload];
+            localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
             return {
                 ...state,
-                expenses: [...state.expenses, action.payload],
+                expenses: updatedExpenses,
+            };
+        case 'DELETE_EXPENSE':
+            const filteredExpenses = state.expenses.filter(
+                (expense) => expense.id !== action.payload
+            );
+            localStorage.setItem('expenses', JSON.stringify(filteredExpenses));
+            return {
+                ...state,
+                expenses: filteredExpenses,
             };
         case 'EDIT_EXPENSE':
-            const updatedExpenses = state.expenses.map((expense) =>
-                expense.id === action.payload.id ? { ...expense, ...action.payload } : expense
+            const editedExpenses = state.expenses.map((expense) =>
+                expense.id === action.payload.id ? action.payload : expense
             );
-            return { ...state, expenses: updatedExpenses };
-        case 'DELETE_EXPENSE':
+            localStorage.setItem('expenses', JSON.stringify(editedExpenses));
             return {
                 ...state,
-                expenses: state.expenses.filter(expense => expense.id !== action.payload),
+                expenses: editedExpenses,
             };
-        case 'LOAD_EXPENSES': // Ensure this case is present
+        case 'ADD_CATEGORY':
+            const updatedCategories = [...state.categories, action.payload];
+            localStorage.setItem('categories', JSON.stringify(updatedCategories));
             return {
                 ...state,
-                expenses: action.payload,
+                categories: updatedCategories,
             };
         default:
             return state;
     }
 };
 
-export const AppContext = createContext(initialState);
+// Create Context
+export const AppContext = createContext();
 
+// App Provider component to pass down state and dispatcher
 export const AppProvider = ({ children }) => {
-    const [state, dispatch] = useReducer(AppReducer, initialState);
-
-    // Load data from localStorage
-    useEffect(() => {
-        const budget = localStorage.getItem('budget');
-        const expenses = localStorage.getItem('expenses');
-
-        if (budget) {
-            dispatch({ type: 'SET_BUDGET', payload: JSON.parse(budget) });
-        }
-
-        if (expenses) {
-            dispatch({ type: 'LOAD_EXPENSES', payload: JSON.parse(expenses) });
-        }
-    }, []);
-
-    // Save budget and expenses to localStorage
-    useEffect(() => {
-        localStorage.setItem('budget', JSON.stringify(state.budget));
-        localStorage.setItem('expenses', JSON.stringify(state.expenses));
-    }, [state.budget, state.expenses]);
+    const [state, dispatch] = useReducer(appReducer, initialState);
 
     return (
-        <AppContext.Provider value={{ budget: state.budget, expenses: state.expenses, dispatch }}>
+        <AppContext.Provider
+            value={{
+                expenses: state.expenses,
+                budget: state.budget,
+                categories: state.categories, // Pass categories into context
+                dispatch,
+            }}
+        >
             {children}
         </AppContext.Provider>
     );
